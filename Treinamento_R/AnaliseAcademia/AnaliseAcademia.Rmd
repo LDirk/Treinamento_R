@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+ 
+
+```{r}
+library(readxl)
+
+base = read_excel("dadosAcademia.xlsx", sheet=1 , col_names=TRUE)
+```
+
+
+# Colocando sexo na linha e tipo de exercício na coluna, tabela de contingência. 
+
+```{r}
+tabela_sexo_exercicio = table(base$Sexo, base$Exercício)
+tabela_sexo_exercicio
+``` 
+
+# Dados estatísticos descritivos da base 
+```{r}
+summary(base)
+```
+
+# Teste Qui-Quadrado, não é apropriado em variaveis nominais
+```{r}
+summary(tabela_sexo_exercicio)
+# n = 30 
+# Chisq = 0.08929
+# p-value = 0.7651
+
+```
+
+
+# Teste Fi
+```{r}
+Qui = 0.08929
+
+# 30 é o tamanho da amostra 
+Fi = sqrt(Qui/30)
+Fi 
+
+```
+
+
+# tabela de contigência, sexo na linha, idade na coluna 
+```{r}
+tabela_sexo_idade = table(base$Sexo, base$Idade)
+tabela_sexo_idade
+
+print('----------------------')
+
+
+summary(tabela_sexo_idade)
+```
+
+
+# Tabela sexo, idade e frequencia semanal
+```{r}
+tabela_sexo_idade_frequenciasemanal = table(base$Sexo, base$Idade, base$Fsemanal)
+tabela_sexo_idade_frequenciasemanal
+
+print("---------------------------------------------")
+summary(tabela_sexo_idade_frequenciasemanal)
+```
+
+
+
+```{r}
+```
+
+
+```{r}
+```
+

@@ -1,0 +1,479 @@
+---
+title: "Experimentação de cigarro por jovens no município do Rio de Janeiro, Análise exploratória"
+author: "Lucas Dirk Gomes Ferreira"
+date: "19/07/2021"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+    
+---
+
+
+```{r, message=F, warning=F}
+library(srvyr)
+library(survey)
+library(survival)
+library(tidyverse)
+library("gplots")
+library(DT)
+require(knitr)
+
+
+```
+
+
+### A base de dados dessa análise será  a  amostra 1 da PENSE 2015, essa amostra contempla os escolares frequentando a oitava série do ensino fundamental. Vale ressaltar que a pesquisa utilizada faz a expansão para a população com um intervalo de confiança de 95%
+```{r}
+BaseBR2015 = read.csv2(file = 'PENSE.csv',header=T, sep=";") 
+
+```
+
+### Aplicando o desenho da amostra da PENSE 2015. 
+```{r}
+desenho = svydesign(id =~ escola,
+                    
+  strata =~ ESTRATOGEOREG,
+  weights =~ as.numeric(PESO),
+  data = BaseBR2015,
+  nest = T)
+```
+
+### Aplicando o desenho para o município do Rio de Janeiro.Para a criação do desenho do município, foi utilizado o dicionário das variáveis da PENSE 2015.
+```{r}
+desenhoRJ = subset(desenho, UFCENSO == 33 & TIPO_MUNIC == 1)
+```
+
+
+# Análise exploratória dos dados
+
+
+### Conhecendo a faixa etária da nossa população, vale ressaltar que o comando utilizado foi o "svytable(~factor(VB01003),desenhoRJ)" para ser feita a expansão da amostra para população.    
+
+```{r}
+# svytable(~factor(VB01003),desenhoRJ) 
+
+idade = c ("11 anos ou menos","12 anos","13 anos","14 anos","15 anos","16 anos","17 anos", "18 anos","19 anos ou mais")
+
+valores = c(29.04, 136.99,  5794.07, 40038.003, 19618.33, 4404.52, 660.94, 135.19, 225.60)
+
+porce = 100/sum(valores) 
+porcentagem = valores*porce
+porcentagem = sprintf("%.3f", porcentagem)
+
+tabela0 = data.frame(Idade = idade, Valores = valores, . = paste(porcentagem,'%'))
+
+DT::datatable(tabela0, rownames = FALSE)
+
+```
+
+
+
+
+
+### Distribuição de Frequência sobre o uso de cigarro estimada para população. Os dados foram obtidos através da pergunta: Alguma vez na vida, você já fumou cigarro, mesmo uma ou duas tragadas?. O comando utilizado foi "#svytable(~factor(VB04001),desenhoRJ)" 
+
+
+```{r, results="asis"}
+resposta = c("Sim","Não") 
+
+valores = c(11660.90, 59381.82)
+
+porce = 100/sum(valores) 
+porcentagem = valores*porce
+porcentagem = sprintf("%.2f", porcentagem)
+
+tabela1 = data.frame(Resposta = resposta, Valores = valores, . = paste(porcentagem,'%'))
+DT::datatable(tabela1, rownames = FALSE)
+
+
+```
+
+
+### Gráfico de barras para representar a quantidade de jovens que já utilizaram cigarro e jovens que não. 
+
+```{r}
+
+demo <- tribble(
+  ~Resposta, ~Frequência,
+  "Sim", 11660.90,
+  "Não", 59381.82
+)
+
+ggplot( data = demo) + 
+  geom_bar(
+    mapping = aes( x = Resposta, y = Frequência ), stat = "identity"
+  )
+
+```
+
+
+### Distribuição de Frequência sobre uso de cigarro em relação a idade estimada para população. Dados obtidos através da pergunta: Que idade você tinha quando experimentou fumar cigarro pela primeira vez?. Comando utilizado "svytable(~factor(VB04002),desenhoRJ)"
+ 
+
+```{r}
+resposta = c( "7 anos ou menos","8 anos", "9 anos","10 anos", "11 anos","12 anos","13 anos","14 anos","15 anos", "16 anos","Não informado")
+
+valores = c( 429.05, 340.55, 130.70, 411.27, 237.85, 1501.98, 2837.03, 4323.47,  1025.51,   392.74, 30.70) 
+
+porce = 100/sum(valores) 
+porcentagem = valores*porce 
+porcentagem = sprintf("%.2f", porcentagem)
+
+tabela2 = data.frame(Resposta = resposta, Valores = valores, . =paste (porcentagem,'%'))
+DT::datatable(tabela2, rownames = FALSE)
+
+
+```
+
+### Gráfico de barras para representar a idade em que cada jovem experimentou cigarro pela primeira vez.  
+```{r}
+demo <- tribble(
+    ~Idade, ~Frequência,
+    "7 ou menos", 429.05,
+    "8", 340.55, 
+    "9", 130.70,
+     "10", 411.27,
+    "11", 237.85,
+    "12", 1501.98,
+    "13", 2837.03,
+    "14", 4323.47,
+    "15",1025.51,
+    "16",392.74
+    
+    
+
+  )
+ demo$Idade = factor(demo$Idade, levels = c( "7 ou menos", "8", "9" , "10", "11" , "12" , "13" , "14" , "15" , "16"))
+  
+  ggplot( data = demo) + 
+    geom_bar( mapping = aes( x = Idade, y = Frequência), stat = "identity" 
+    )
+
+```
+
+
+### Agora  iremos investigar algumas variáveis com possível associação a experimentação do cigarro. As variáveis investigadas serão: Sexo, Raça e idade e dependência administrativa da escola. Vale ressaltar que não será realizada a expansão para fazermos uma análise exploratória em cima da amostra do município do Rio de Janeiro. 
+
+
+### Tabela de contingência entre as variáveis "Já fumou?" e "Sexo".
+
+```{r}
+
+
+
+amostra = BaseBR2015 %>% filter (MUNICIPIO_CAP == 3304557)
+
+contigencia_cigarro_sexo = table(amostra$VB04001, amostra$VB01001)
+
+colnames(contigencia_cigarro_sexo) = c("Masculino", "Feminino") 
+rownames(contigencia_cigarro_sexo) = c("Ja fumou", "Não Fumou")
+contigencia_cigarro_sexo
+
+
+
+```
+
+
+### Agora será plotado três gráficos para facilitar a visualização  da relação entre as variáveis "Já fumou?" e "Sexo".  
+```{r}
+
+plot(contigencia_cigarro_sexo, main ='')
+barplot(contigencia_cigarro_sexo, beside = T, legend = T)
+
+dt <- as.table(as.matrix(contigencia_cigarro_sexo))
+balloonplot(t(dt), main ="Uso de cigaro x Sexo", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+```
+
+
+
+
+### Usando o teste qui-quadrado de Pearson, sendo h0: Não há associação entre as variáveis sexo e experimentação do cigarro. Serão aceitos como estatisticamente significativos p valores menores que 0,05. Logo, como p < 0.05, se rejeita h0.   
+```{r}
+chisq = chisq.test(contigencia_cigarro_sexo)
+chisq
+
+```
+
+
+
+### Na variável raça, será categorizado as cores pretas e pardas, formando a raça negra. Também será colocado como "outras" amarelos e indígenas devido sua pouca representatividade na amostra. 
+
+```{r}
+raca = c()
+for (x in 1:length(BaseBR2015$VB01002)){
+  
+  # Nova regra, 1 branca
+  if (BaseBR2015$VB01002[x] == 1){
+    raca = append(raca,1)
+    
+  }
+  
+  # Nova regra, 2 Negra
+  else if (BaseBR2015$VB01002[x] == 2 || BaseBR2015$VB01002[x] == 4 ){
+    raca = append(raca,2)
+  
+  }
+  
+
+  # Nova regra, 3 outras
+  
+  else if (BaseBR2015$VB01002[x] == 3  || BaseBR2015$VB01002[x] == 5 ){
+    raca = append(raca,3)
+    
+  }
+  
+  #Nova regra, 99 Não informado
+  else {
+    raca = append(raca, 99)
+   
+  } 
+}
+
+```
+
+### Adicionando a variável raça na base. 
+
+```{r}
+BaseBR2015 = transform(BaseBR2015, raca = raca)
+
+desenho = svydesign(id =~ escola,
+                    
+  strata =~ ESTRATOGEOREG,
+  weights =~ as.numeric(PESO),
+  data = BaseBR2015,
+  nest = T) 
+
+desenhoRJ = subset(desenho, UFCENSO == 33 & TIPO_MUNIC == 1)
+
+
+```
+
+### Tabela de contingência entre as variáveis "Ja fumou?" e "Raça". 
+
+```{r}
+amostra = BaseBR2015 %>% filter (MUNICIPIO_CAP == 3304557)
+
+
+contigencia_cigarro_raca = table(amostra$VB04001, amostra$raca)
+
+colnames(contigencia_cigarro_raca) =  c("Branca", "Negra","Outras","Não informado") 
+rownames(contigencia_cigarro_raca) = c("Já fumou","Não Fumou")
+
+contigencia_cigarro_raca 
+
+```
+
+
+### Agora será plotado dois gráficos para facilitar a visualização  da relação entre as variáveis "Já fumou?" e "Raça" 
+```{r}
+barplot(contigencia_cigarro_raca, beside = T, legend = T)
+
+dt <- as.table(as.matrix(contigencia_cigarro_raca))
+balloonplot(t(dt), main ="Uso de cigaro x Raça", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+```
+
+
+### Usando o teste qui-quadrado de Pearson, sendo h0: Não há associação entre as variáveis raça e experimentação do cigarro. Serão aceitos como estatisticamente significativos p valores menores que 0,05. Como o p-valor > 0.05, h0 não será rejeitado. 
+
+```{r}
+chisq = chisq.test(contigencia_cigarro_raca)
+chisq
+
+```
+
+
+
+### Tabela de contingência entre as variáveis  "Já fumou?" e "Idade". 
+```{r}
+amostra = BaseBR2015 %>% filter (MUNICIPIO_CAP == 3304557)
+
+
+contigencia_cigarro_idade = table(amostra$VB04001, amostra$VB01003)
+rownames(contigencia_cigarro_idade) = c("Já fumou","Não Fumou")
+colnames(contigencia_cigarro_idade) =  c("11 -", "12","13","14" ,"15","16","17" ,"18","19 +") 
+
+contigencia_cigarro_idade
+
+```
+
+### Agora será plotado dois gráficos para facilitar a visualização  da relação entre as variáveis "Já fumou?" e "idade" 
+```{r}
+barplot(contigencia_cigarro_idade, beside = T, legend = T)
+
+dt <- as.table(as.matrix(contigencia_cigarro_idade))
+balloonplot(t(dt), main ="Uso de cigaro x Idade", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+```
+
+
+
+
+### Tabela de contingência entre as variáveis "Já fumou?" e "Dependência administrativa da escola". 
+```{r}
+amostra = BaseBR2015 %>% filter (MUNICIPIO_CAP == 3304557)
+
+
+contigencia_cigarro_escola = table(amostra$VB04001, amostra$V0007)
+
+rownames(contigencia_cigarro_escola) = c("Já fumou","Não Fumou")
+colnames(contigencia_cigarro_escola) = c("Publica","Privada")
+
+contigencia_cigarro_escola
+
+```
+
+
+### Agora será plotado dois gráficos para facilitar a visualização  da relação entre as variáveis "Já fumou?" e "Dependência administrativa da escola".
+```{r}
+plot(contigencia_cigarro_escola, main ='')
+barplot(contigencia_cigarro_escola, beside = T, legend = T)
+
+dt <- as.table(as.matrix(contigencia_cigarro_escola))
+balloonplot(t(dt), main ="Uso de cigaro x Dependência administrativa da escola", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+```
+
+
+### Usando o teste qui-quadrado de Pearson, sendo h0: Não há associação entre as variáveis raça e dependência administrativa da escola. Serão aceitos como estatisticamente significativos p valores menores que 0,05. Como o p-valor < 0.05, h0 será rejeitado. 
+
+```{r}
+chisq = chisq.test(contigencia_cigarro_escola)
+chisq
+
+```
+
+
+# Análise de sobrevivência
+
+### Tendo em vista que muitos dados são censurados, ou seja, muitos jovens ainda não experimentaram cigarro pela primeira vez, vale a pena fazer uma análise de sobrevivência para esses dados serem considerados e analisados através da função de sobrevivência, tal função representa a probabilidade do jovem não ter experimentado o fenômeno até um certo tempo t. Vale ressaltar que os dados foram estimados para toda população. 
+
+
+### Criação da variável "Tempo" e "Censura" para o consumo de cigarro. 0 significa censura a direita, 1 significa falha. 
+
+
+```{r}
+censura = c()
+tempo = c()
+
+for (i in 1:length(BaseBR2015$VB04002)){
+  
+  if (BaseBR2015$VB04002[i] == -1){
+    
+    tempo = append(tempo, BaseBR2015$VB01003[i])
+    censura = append(censura, 0)
+  }
+  
+  else if (BaseBR2015$VB04002[i]>=7 && BaseBR2015$VB04002[i]<=18){
+    
+    tempo = append(tempo,BaseBR2015$VB04002[i])
+    censura = append(censura, 1)
+    
+  }
+  
+  else if (BaseBR2015$VB04002[i] == 99 || BaseBR2015$VB04001[i] == 99){
+    tempo = append(tempo, NA)
+    censura = append(censura, NA) 
+    
+  }
+  
+}
+
+
+```
+
+
+### Adicionando as variáveis tempo e censura na base. 
+```{r}
+BaseBR2015 = transform(BaseBR2015, tempo=tempo, censura=censura)
+
+desenho = svydesign(id =~ escola,
+                    
+  strata =~ ESTRATOGEOREG,
+  weights =~ as.numeric(PESO),
+  data = BaseBR2015,
+  nest = T)
+
+desenhoRJ = subset(desenho, UFCENSO == 33 & TIPO_MUNIC == 1)
+```
+
+### Estimação da função de sobrevivência da iniciação ao cigarro pelo estimador de Kaplan-Meier. 
+```{r}
+ekm = svykm(Surv(tempo,censura)~1,design = desenhoRJ) 
+plot(ekm,  xlab="Tempo (anos)",xlim = c(7,19), ylab="S(t) estimada")
+
+```
+
+### Estimação da função de sobrevivência da iniciação ao cigarro pelo estimador de Kaplan-Meier, usando como variavél explicativa o sexo
+```{r} 
+ekm.sexo = svykm(Surv(tempo,censura)~VB01001,design=desenhoRJ)
+plot(ekm.sexo,xlab = "Tempo (anos)",ylab = "S(t) estimada",pars=list(lty=c(1,2),col=c("black","red")))
+Legenda<-c("Masculino","Feminino")
+legend("bottomleft", Legenda,lwd=c(1,1),cex=0.7,inset=0.00,col=c(1,2),bty="n", lty = c(1,2)) 
+
+``` 
+### Estimação da função de sobrevivência, usando como variável explicativa a dependência  administrativa da escola. 
+```{r}
+ekm.depAdm = svykm(Surv(tempo,censura)~V0007,design=desenhoRJ)
+plot(ekm.depAdm,ylab = "S(t) estimada",xlab = "Tempo (anos)"
+     ,pars=list(lty=c(1,2),col=c("black","black")))
+Legenda<-c("Publica","Privada")
+legend("bottomleft", Legenda,lwd=c(1,1),cex=0.7,inset=0.00,col=c(1,1),bty="n", lty = c(1,2))
+```
+
+### Estimação da função de sobrevivência da iniciação ao cigarro pelo estimador de Kaplan-Meier, usando como variável explicativa a raça.
+```{r}
+ekm.raca = svykm(Surv(tempo,censura)~raca,design=desenhoRJ, )
+plot(ekm.raca, ylab = "S(t) estimada",xlab = "Tempo (idade)"
+     ,pars=list(lty=c(1,2,1,2),col=c("green","black","red", "transparent")))
+Legenda<-c("Branca", "Preta", "Outras ",  "")
+legend("bottomleft", Legenda,lwd=c(1,1),cex=1,inset=0.00,col=c("green","black","red", "transparent"),bty="n", lty = c(1,2,1,2))
+```
+
+### Construção da função do tempo médio da iniciação da experimentação do fenômeno. Vale ressaltar que como boa parte dos dados são censurados, esse tempo médio não será muito preciso. 
+```{r}
+#Função do tempo médio 
+tempm = function(var){
+        aprox = c()
+        for (j in 1:length(var$time)-1) {
+                stj = var$surv[j]
+                tj1 = var$time[j+1]
+                tj=   var$time[j]     
+                aprox[j] = stj*(tj1-tj) 
+        }
+        med = var$time[1] + sum(aprox)  
+        med
+}
+```
+
+### Tempo médio da experimentação do fenômeno.
+```{r}
+print("Sexo Masculino")
+tempm(ekm.sexo$'1')  
+
+print("Sexo Feminino")
+tempm(ekm.sexo$'2') 
+
+print("Escola pública")
+tempm(ekm.depAdm$"1")
+
+print("Escola particular")
+tempm(ekm.depAdm$"2")
+
+print("Raça branca")
+tempm(ekm.raca$"1") 
+
+print("Raça negra")
+tempm(ekm.raca$"2") 
+
+print("Outras Raças")
+tempm(ekm.raca$"3")
+```
+
+
+

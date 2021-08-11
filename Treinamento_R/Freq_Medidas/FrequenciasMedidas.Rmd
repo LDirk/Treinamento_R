@@ -1,0 +1,491 @@
+---
+title: "FreqMedidas"
+output: html_notebook
+---
+
+
+
+# Mostra informações da Máquina
+```{r}
+sessionInfo()
+
+```
+
+
+```{r}
+library(dplyr)
+```
+
+# Importando o Dataset
+```{r}
+dados = read.csv("dados.csv")
+```
+
+# Vendo os 5 primeiros registros
+```{r}
+head(dados,5)
+```
+
+
+# Selecionando apenas uma coluna no df
+```{r}
+select(dados, Anos.de.Estudo)
+```
+
+# Retorna as categorias. 
+```{r}
+unique(select(dados, Anos.de.Estudo))
+```
+
+# Ordenando as Categorias
+```{r}
+arrange(unique(select(dados, Anos.de.Estudo)),Anos.de.Estudo)
+
+```
+
+# Colocando os anos de estudo em um vetor ordenado
+```{r}
+c(arrange(unique(select(dados, Anos.de.Estudo)),Anos.de.Estudo))
+```
+
+
+```{r}
+c(arrange(unique(select(dados, UF)),UF))
+
+```
+
+```{r}
+c(arrange(unique(select(dados, Sexo)),Sexo))
+
+```
+
+```{r}
+c(arrange(unique(select(dados, Cor)),Cor))
+
+```
+# Minimo e Maximo
+```{r}
+sprintf('De %s até %s anos', min(dados$Idade),max(dados$Idade))
+
+```
+
+```{r}
+library(glue)
+glue('De {min(dados$Idade)} até {max(dados$Idade)} anos')
+
+```
+
+
+```{r}
+glue('De {min(dados$Altura)} até {max(dados$Altura)} metros')
+
+```
+
+# Fazendo uma contagem de cada categoria
+```{r}
+table(dados$Sexo)
+```
+
+# Fazendo a frequencia relativa da tabela e a tabela 
+```{r}
+dist_freq_qualitativas = cbind(freq = table(dados$Sexo), percent = prop.table(table(dados$Sexo))*100)
+
+prop.table(table(dados$Sexo))
+print('-----------------------')
+dist_freq_qualitativas
+
+```
+
+# Renomeando as colunas e as linhas da tabela
+```{r}
+colnames(dist_freq_qualitativas) = c('Frequencia','Porcentagem (%)') 
+rownames(dist_freq_qualitativas) = c("Masculino", "Feminino")
+
+dist_freq_qualitativas
+```
+
+# Distribuição de frequencias cruzando duas variaveis diferentes
+```{r}
+frequencia = table(dados$Sexo, dados$Cor)
+
+rownames(frequencia) = c("Masculino","Feminino")
+colnames(frequencia) = c("Indigena", "Branca", "Preta","Amarela","Parda")
+
+frequencia
+
+```
+
+# Passando para frequencia relativa
+```{r}
+percentual = prop.table(frequencia)*100
+percentual
+```
+
+# Tabela da renda média por sexo e cor
+```{r}
+medias = tapply(dados$Renda, list(dados$Sexo, dados$Cor), mean)
+
+rownames(medias) = c("Masculino","Feminino")
+colnames(medias) = c("Indigena", "Branca", "Preta","Amarela","Parda")
+
+medias
+```
+
+# Categorizando variaveis e fazendo a tabela
+```{r}
+min(dados$Renda)
+max(dados$Renda)
+
+classes = c(0 ,1576,3152,7880,15760,200000)
+
+labels = c("E","D","C","B","A")
+
+
+frequencia = table(
+  cut(
+  
+    x  = dados$Renda, 
+    breaks = classes,
+    labels = labels,
+    include.lowest = T
+  )
+)
+
+frequencia
+
+
+```
+
+# Frequencia relativa
+```{r}
+percentual = prop.table(frequencia)*100
+
+
+dist_freq_quantitativas_personalizadas = cbind('Frequencia' = frequencia, 'Porcentagem (%)' = percentual)
+
+dist_freq_quantitativas_personalizadas[
+  order(row.names(dist_freq_quantitativas_personalizadas)),
+  
+]
+
+
+```
+
+# Definindo o numero de classes, regra de Sturges
+```{r}
+n = nrow(dados)
+
+k = 1 + (10 / 3)* log10(n)
+k = round(k)
+
+
+
+labels <- c(   '      0.00 |—|  11,764.70',    ' 11,764.70  —|  23,529.40',     ' 23,529.40  —|  35,294.10',     ' 35,294.10  —|  47,058.80',     ' 47,058.80  —|  58,823.50',     ' 58,823.50  —|  70,588.20',     ' 70,588.20  —|  82,352.90',     ' 82,352.90  —|  94,117.60',     ' 94,117.60  —| 105,882.00',     '105,882.00  —| 117,647.00',     '117,647.00  —| 129,412.00',     '129,412.00  —| 141,176.00',     '141,176.00  —| 152,941.00',     '152,941.00  —| 164,706.00',     '164,706.00  —| 176,471.00',     '176,471.00  —| 188,235.00',     '188,235.00  —| 200,000.00'  ) 
+
+
+frequencia = table(
+  cut(
+  
+    x  = dados$Renda, 
+    breaks = k,
+    labels = labels,
+    include.lowest = T
+  )
+)
+
+
+percentual = prop.table(frequencia)*100
+
+
+dist_freq_quantitativas_amplitudefixa = cbind('Frequencia' = frequencia, 'Porcentagem (%)' = percentual) 
+
+dist_freq_quantitativas_amplitudefixa
+
+```
+
+
+
+```{r}
+library(ggplot2)
+
+```
+
+# Define o tamanho dos gráficos
+```{r}
+options(repr.plot.width = 7, repr.plot.height = 4)
+```
+
+# Criando um histograma
+```{r}
+hist(
+  x = dados$Altura,
+  breaks = 'Sturges',
+  col = 'lightblue',
+  main = 'Histograma das Alturas',
+  xlab = "Altura",
+  ylab = 'Frequencias'
+    
+)
+```
+
+# Criar um histograma com ggplot
+```{r}
+ggplot(dados, aes(x = Altura)) + 
+         geom_histogram(binwidth = 0.02, color ="black", alpha = 0.9)+
+         ylab("Frequencia") + 
+         xlab("Alturas") + 
+         ggtitle("Histograma das Alturas") + 
+         theme(
+           plot.title = element_text(size = 14, hjust = 0.5),
+           axis.title.y = element_text (size = 12, vjust = +0.2),
+           axis.title.x = element_text(size = 12, vjust = -0.2),
+           axis.text.y = element_text(size = 10), 
+           axis.text.x = element_text(size = 10)
+      
+         )
+
+
+```
+
+
+# Criar um histograma e curva de densidade com ggplot
+```{r}
+
+formatos = theme(
+           plot.title = element_text(size = 14, hjust = 0.5),
+           axis.title.y = element_text (size = 12, vjust = +0.2),
+           axis.title.x = element_text(size = 12, vjust = -0.2),
+           axis.text.y = element_text(size = 10), 
+           axis.text.x = element_text(size = 10)
+      
+         )
+
+ggplot(dados, aes(x = Altura, y = ..density..)) + 
+         geom_histogram(binwidth = 0.02, color ="black", alpha = 0.9)+
+         geom_density(color = 'green')+
+         ylab("Frequencia") + 
+         xlab("Alturas") + 
+         ggtitle("Histograma das Alturas") +
+         formatos
+
+
+```
+
+# Gráfico de barras
+```{r}
+bar_chart = data.frame(dist_freq_quantitativas_personalizadas)
+
+
+ggplot(bar_chart, aes(x = row.names(bar_chart), y = bar_chart$Frequencia))           + 
+          geom_bar(stat = 'identity')+
+          ylab('Frequencia') + 
+          xlab("Classes de Renda") + 
+          ggtitle("Gráfico de Classes de Renda") +
+          formatos
+
+
+
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```

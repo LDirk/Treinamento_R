@@ -1,0 +1,47 @@
+---
+title: "Your Document Title"
+author: "Document Author"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+## A New Output Format
+
+```{r}
+dados = read.csv('UF53.csv',header=T, sep=";")
+
+
+table(dados$V4105a)
+```
+
+# Se tem acesso a internet, V02322
+
+
+# Código de situação censitária, V4105a
+
+
+```{r}
+
+tabela_contigencia = table(dados$v02322, dados$v4105a)
+
+colnames(tabela_contigencia) = c("Rural", "Urbana") 
+rownames(tabela_contigencia) = c("Sim", "Não")
+
+
+tabela_contigencia
+```
+
+# Gráfico de Barras
+```{r}
+barplot(tabela_contigencia, beside = T, legend = T)
+```
+
+# p-valor<0.05, rejeito a hipotese nula ( define a hipotese nula andré)
+```{r}
+chisq = chisq.test(tabela_contigencia)
+chisq
+
+```

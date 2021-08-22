@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+ 
+
+```{r}
+library(srvyr)
+library("dplyr")
+library("readxl")
+library(survival)
+library(survey)
+
+```
+
+```{r}
+BaseBR2015 = read.csv2(file = 'PENSE.csv',header=T, sep=";")
+```
+
+```{r}
+#####################################################################################################
+# Criando a variavel tempo e censura
+# 0 censura a direita, 1 falha
+# A variavel tempo se refere ao tempo até a primeira relação sexual (c = 1) ou a idade que o individuo
+# tinha na pesquisa, mas que ainda não tinha tido relação sexual (c = 0)
+#####################################################################################################
+i = 1 
+tempo = c()
+censura = c()
+while (i <= length(BaseBR2015$VB08002)){
+  
+  if (BaseBR2015$VB08002[i] == -1){
+    
+    tempo = append(tempo,BaseBR2015$VB01003[i])
+    censura = append(censura, 0)
+    i = i + 1
+  }  
+  
+  
+  else if (BaseBR2015$VB08002[i]>=9 && BaseBR2015$VB08002[i]<=18){
+    
+    tempo = append(tempo,BaseBR2015$VB08002[i])
+    censura = append(censura, 1)
+    i = i + 1
+  }
+    
+  
+  else if (BaseBR2015$VB08002[i] == 99 || BaseBR2015$VB08001[i] == 99){
+    tempo = append(tempo, NA)
+    censura = append(censura, NA) 
+    i = i + 1
+    
+  }
+}
+
+BaseBR2015 =  transform(BaseBR2015, tempo=tempo, censura=censura)
+
+```
+
+```{r}
+desenho = svydesign(id =~ escola,
+                    
+  strata =~ ESTRATOGEOREG,
+  weights =~ as.numeric(PESO),
+  data = BaseBR2015,
+  nest = T)
+desenhobr = subset(desenho, PAIS == 76) 
+
+```
+
+```{r}
+ekm = svykm(Surv(tempo,censura)~1,design = desenhobr )
+plot(ekm,  xlab="Tempo (anos)",xlim = c(7,19), ylab="S(t) estimada")
+Legenda = c("Kaplan-Meier ")
+legend("bottomleft", Legenda)
+
+```
+

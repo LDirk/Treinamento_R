@@ -77,3 +77,14 @@ legend("bottomleft", Legenda)
 
 ```
 
+# Curva de sobrevivência por sexo. 
+```{r}
+
+ekm.sexo = svykm(Surv(tempo,censura)~VB01001,design=desenhobr)
+plot(ekm.sexo,xlab = "Tempo (anos)",ylab = "S(t) estimada",pars=list(lty=c(1,2),col=c("black","red")))
+Legenda<-c("Masculino","Feminino")
+legend("bottomleft", Legenda,lwd=c(1,1),cex=0.7,inset=0.00,col=c(1,2),bty="n", lty = c(1,2))
+
+
+```
+

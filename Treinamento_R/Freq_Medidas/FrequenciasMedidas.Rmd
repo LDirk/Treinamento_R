@@ -288,6 +288,140 @@ ggplot(bar_chart, aes(x = row.names(bar_chart), y = bar_chart$Frequencia))      
 ```
 
 ```{r}
+materias = c("Matemática", "Português", "Inglês", "Geografia", "História", "Física", "Química")
+
+fulano = c(8,10,4,8,6,10,8)
+beltrano = c(10,2,0.5,1,3,9.50,10)
+sicrano = c(7.5,8,7,8,8,8.5,7)
+
+```
+
+```{r}
+df = data.frame(fulano, beltrano,sicrano, row.names = materias)
+df
+```
+
+# Média no R
+```{r}
+mean(df$fulano)
+
+mean(dados$Renda)
+```
+# Comparando média de acordo com variaveis ( exemplo, renda média entre pessoas do sexo masculino e feminino)
+```{r}
+aggregate(list( Renda = dados$Renda), list(Sexo = dados$Sexo), mean)
+
+```
+# Mediana
+```{r}
+median(df$fulano)
+```
+
+# selecionando valores aleatorios da amostra
+```{r}
+set.seed(101) # garante o mesmo resultado
+sample(nrow(df),6) # 6 linhas
+
+```
+
+```{r}
+set.seed(101)
+df_beltrano = df[sample(nrow(df),6),]
+df_beltrano
+
+#achando a mediana 
+median(df_beltrano$beltrano)
+
+median(dados$Renda)
+```
+
+# moda 
+```{r}
+exemplo_moda = c(1,2,2,3,4,4,5,6,7,7)
+exemplo_moda
+```
+
+# moda
+```{r}
+freq = table(exemplo_moda)
+
+freq[ freq == max(freq)]
+```
+
+# Moda
+```{r}
+names(freq)[ freq == max(freq)]
+
+```
+
+
+# Criando a função moda
+```{r}
+moda = function(x){
+  freq = table(x)
+  
+  return(names(freq)[ freq == max(freq)])
+}
+
+```
+
+```{r}
+moda(dados$Renda)
+
+```
+
+#Relação entre medidas de tendência central 
+
+```{r}
+ggplot(dados[dados$Renda<20000,], aes(x = Renda, y =..density..))+
+  geom_histogram(binwidth = 500) +
+  geom_density(color = "green")
+  
+```
+
+
+```{r}
+moda = as.numeric(moda(dados$Renda))
+moda
+```
+
+```{r}
+mediana = median(dados$Renda)
+mediana
+```
+
+```{r}
+media = mean(dados$Renda)
+media
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
 ```
 
 ```{r}

@@ -397,229 +397,219 @@ media
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
-```{r}
-```
-
+#  Quartis
 ```{r}
-```
+quantile(dados$Renda, c(0.25, 0.5, 0.75))
 
-```{r}
 ```
 
+# Decis
 ```{r}
-```
+decis = c()
+for (i in 1:9){
+  decis = c(decis, i/10)
+}
 
-```{r}
-```
+quantile(dados$Renda, decis)
 
-```{r}
 ```
-
-
+# Centis
 ```{r}
-```
+centis = c()
+for (i in 1:99){
+  centis = c(centis, i/100)
+}
 
-```{r}
-```
+quantile(dados$Renda, centis)
 
-```{r}
 ```
 
-```{r}
-```
 
+# Histograma acumulado, dos percentis para idade
 ```{r}
-```
+ggplot(data = dados, aes(x = Idade)) +
+  
+  geom_histogram(
+    aes(y = cumsum(..count..)/sum(..count..)),
+    bins = 10 
+    
+  ) +
+  
+  geom_freqpoly(
+    
+    aes( y = cumsum(..count..)/sum(..count..)),
+    color = "green"
+    
+  )
 
-```{r}
 ```
-
+# decis para idade 
 ```{r}
-```
+decis = c()
+for (i in 1:9){
+  decis = c(decis, i/10)
+}
 
-```{r}
+quantile(dados$Idade, decis)
 ```
-
+42 % abaixo de 40 anos
 ```{r}
+length(dados$Idade[dados$Idade <= 40])/length(dados$Idade) * 100
 ```
 
-```{r}
-```
+# box plot 
 
 ```{r}
-```
+sexo = c("Masculino", "Feminino")
 
-```{r}
-```
+c = c("Indígena", "Branca", "Preta", "Amarela", "Parda") 
 
-```{r}
-```
+anos_de_estudo = c(
+  "Sem instrução e menos de 1 ano",
+  "1 ano",
+  "2 anos",
+  "3 anos",
+  "4 anos",
+  "5 anos",
+  "6 anos",
+  "7 anos",
+  "8 anos",
+  "9 anos",
+  "10 anos",
+  "11 anos",
+  "12 anos",
+  "13 anos",
+  "14 anos",
+  "15 anos ou mais",
+  "Não determinado"
 
-```{r}
+)
 ```
 
+# box plot
 ```{r}
-```
+ggplot(data = dados, aes(x= "", y = Altura)) +
+  
+  stat_boxplot(geom = "errorbar", width = 0.4) +
+  
+  geom_boxplot(fill = "#3274A1") + 
+  
+  coord_flip() +
+  
+  ylab("Metros") +
+  
+  xlab(" ") + 
+  
+  ggtitle("Box-plot Alturas") +
+  
+  formatos
+  
+  
 
-```{r}
 ```
 
 ```{r}
-```
 
+dados$Cat.sexo = factor(dados$Sexo)
+levels(dados$Cat.sexo) = sexo
 
-```{r}
-```
-
-```{r}
-```
+ggplot(data = dados, aes(x = Sexo, y = Altura, group = Sexo)) +
+  
+   stat_boxplot(geom ='errorbar', width = 0.4) +
+  
+  geom_boxplot(fill = c("#3274A1", "orange")) + 
+  
+  coord_flip() +
+  
+  ylab("Metros") +
+  
+  xlab("Sexo") + 
+  
+  ggtitle("Box-plot Alturas x Sexo ") +
+  
+  formatos
 
-```{r}
-```
 
-```{r}
 ```
 
 ```{r}
+dados$Cat.Anos.de.Estudo = factor(dados$Anos.de.Estudo, order = TRUE)
+levels(dados$Cat.Anos.de.Estudo) = anos_de_estudo
 ```
 
 ```{r}
-```
 
-```{r}
-```
 
-```{r}
-```
+ggplot(data = dados, aes(x = Cat.sexo, y = Anos.de.Estudo)) +
+  
+    stat_boxplot(geom ='errorbar', width = 0.4) +
+    
+    geom_boxplot(fill = c("#3274A1", "orange")) + 
+  
+    coord_flip() +
+  
+    ylab("Anos") +
+  
+    xlab("Sexo") + 
+  
+    ggtitle("Box-plot Anos de Estudo ") +
+  
+    formatos
 
-```{r}
-```
 
-```{r}
-```
 
-```{r}
 ```
 
-```{r}
-```
 
 
-```{r}
-```
 
-```{r}
-```
 
 ```{r}
+df
+summary(df) # Conjunto de estatísticas descritivas
 ```
 
+# Desvio médio absoluto, fazendo na unha 
 ```{r}
-```
 
-```{r}
-```
+nota_fulano = data.frame(Fulano = df$fulano, row.names = row.names(df))
+nota_fulano
 
-```{r}
-```
+nota_media_fulano = mean(nota_fulano$Fulano)
+nota_media_fulano
 
-```{r}
-```
+nota_fulano$Desvio = nota_fulano$Fulano - nota_media_fulano
+nota_fulano$Desvio.Absoluto = abs(nota_fulano$Desvio)
+nota_fulano$Desvio.Absoluto
 
-```{r}
-```
 
-```{r}
+mean(nota_fulano$Desvio.Absoluto)
 ```
 
+# Pacote para Desvios 
 ```{r}
+library(DescTools)
 ```
 
+# Desvio Médio absoluto 
 ```{r}
-```
+MeanAD(df$fulano)  
 
-```{r}
 ```
 
-
+# Variancia 
 ```{r}
+variancia = var(nota_fulano$Fulano)
+variancia
 ```
 
+# desvio padrão
 ```{r}
-```
+sqrt(var(nota_fulano$Fulano))
 
-```{r}
-```
+# ou 
 
-```{r}
-```
+sd(nota_fulano$Fulano)
 
-```{r}
 ```
 
-```{r}
-```

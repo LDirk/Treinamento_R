@@ -1,0 +1,114 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+options(repr.plot.width = 9, repr.plot.height = 6)
+
+formatos = theme(
+           plot.title = element_text(size = 14, hjust = 0.5),
+           axis.title.y = element_text (size = 12, vjust = +0.2),
+           axis.title.x = element_text(size = 12, vjust = -0.2),
+           axis.text.y = element_text(size = 10), 
+           axis.text.x = element_text(size = 10)
+      
+         )
+
+```
+
+```{r}
+dados = read.csv("dados.csv")
+head(dados)
+```
+
+
+```{r}
+classes = c(
+  
+  min(dados$Renda), 
+      2*788, 
+      5*788, 
+      15*788,
+      25*788,
+  max(dados$Renda)
+      )
+classes
+```
+
+
+```{r}
+labels = c("E","D","C","B","A")
+labels
+```
+
+# VBERIFICANDO A FREQUENCIA DAS CLASSES EM RELAÇÃO A RENDA
+```{r}
+frequencia = table(
+  
+  cut(
+    
+    x = dados$Renda,
+    breaks = classes,
+    labels = labels, 
+    include.lowest = TRUE
+  )
+)
+
+frequencia
+```
+```{r}
+percentual = prop.table(frequencia) * 100
+percentual
+
+```
+
+
+
+
+```{r}
+dist_freq_renda = cbind("Frequencia" = frequencia, "Porcentagem(%)" = percentual)
+dist_freq_renda
+```
+
+```{r}
+dist_freq_renda[
+  order(row.names(dist_freq_renda)),
+]
+
+```
+
+```{r}
+bar_chart = data.frame(dist_freq_renda)
+bar_chart
+
+ggplot(bar_chart, aes(x = row.names(bar_chart), y = bar_chart$Frequencia)) +
+  geom_bar( stat = "identity") + 
+  ylab("Frequência") + 
+  xlab("Classes de Renda") + 
+  ggtitle("Gráfico Classes de Renda") + 
+  formatos
+
+```
+
+```{r}
+ggplot(dados, aes(x =Idade)) +
+  geom_histogram(bins = 50) + 
+  ylab("Frequencia") + 
+  xlab("Idades") +
+  ggtitle("Histograma das Idades")+
+  formatos
+
+```
+
+```{r}
+
+
+```

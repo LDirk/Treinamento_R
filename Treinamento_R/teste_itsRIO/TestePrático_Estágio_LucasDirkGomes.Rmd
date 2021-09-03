@@ -1,0 +1,116 @@
+---
+title: "Your Document Title"
+author: "Document Author"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+```{r, message=F, warning=F}
+library(dplyr)
+library(lubridate)
+library(tidyverse)
+library(DT)
+require(knitr)
+
+```
+
+```{r}
+
+base_tweet = read.csv(file = 'base_tweets.csv',header=T, sep=",")
+
+base_pegabot = read.csv(file = 'base_pegabot.csv',header=T,  sep=",", encoding = "UTF-8")
+
+```
+
+### 1) Apresente em um gráfico a evolução da publicação de tweets no tempo
+```{r}
+base_tweet%>% group_by(hour(date))%>% summarize(n())
+```
+
+
+```{r}
+
+demo <- tribble(
+  ~Tempo, ~ Tweets,
+  
+  "22:00", 176,
+  "23:00", 278,
+  "00:00", 113,
+  "01:00",73, 
+  "02:00",69,
+  "03:00",26, 
+  "04:00",10,
+  "05:00",23,
+  "06:00",63,
+  "07:00",87,
+  "08:00",76,
+  "09:00",2,
+  "10:00",4,
+
+)
+
+
+demo$Tempo = factor(demo$Tempo, levels = c( "22:00", "23:00", "00:00" , "01:00", "02:00" , "03:00" , "04:00" , "05:00" , "06:00" , "07:00","08:00","09:00","10:00"))
+
+
+  ggplot( data = demo) + 
+    geom_bar( mapping = aes( x = Tempo, y = Tweets), stat = "identity", color = "blue", fill = "lightblue",
+    ) + labs (title ="Tweets publicados entre as 22:00 até as 10:00 dos dias 13/04/21 a 14/04/21")
+    
+  
+```
+
+
+### 2. Quais usuários fizeram mais publicações?
+```{r}
+
+#sort(base_pegabot$"Número.de.Tweets", decreasing = TRUE) 
+
+# OS 5 maiores valores são:  543592, 406726, 349974, 346022, 257142
+
+primeiro = base_pegabot %>% filter (Número.de.Tweets == 543592.0) 
+segundo = base_pegabot %>% filter (Número.de.Tweets == 406726) 
+terceiro = base_pegabot %>% filter (Número.de.Tweets == 349974) 
+quarto = base_pegabot %>% filter (Número.de.Tweets == 346022) 
+quinto = base_pegabot %>% filter (Número.de.Tweets == 257142) 
+
+
+
+posicao = c("Primeiro", "Segundo", " Terceiro", " Quarto", " Quinto")
+nomes = c(primeiro$Perfil.Twitter,segundo$Perfil.Twitter,terceiro$Perfil.Twitter,quarto$Perfil.Twitter, quinto$Perfil.Twitter)
+
+tabela1 = data.frame(Posição = posicao, Nomes = nomes)
+
+DT::datatable(tabela1, rownames = FALSE)
+
+```
+
+
+
+### 3. De acordo com a base do Pegabot, quantos usuários têm comportamento automatizado, com resultado da coluna de análise total maior ou igual a 70%? 
+
+
+```{r}
+var = base_pegabot %>% filter (Análise.Total >= 0.70) 
+length(var$Perfil.Twitter)
+
+```
+### 4. Encontrou algo legal nessa base que queira adicionar? Compartilha com a gente, pode ser um ou vários achados.
+
+
+
+# Número médio e Quartis dos números de tweets. 
+```{r}
+
+#summary(base_pegabot)
+
+x = c("Media","Primeiro Quartil","Segundo Quartil", "Terceiro Quartil")
+valores = c (16562.5, 904.5, 3865.0, 13974.0)
+
+tabela2 = data.frame(.= x, Valores = valores)
+
+DT::datatable(tabela2, rownames = FALSE)
+```

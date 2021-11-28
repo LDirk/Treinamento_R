@@ -1,0 +1,582 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+# Lendo os dados : 
+```{r}
+dados = read.table("Banco_salarios.txt",header=T)
+
+x = dados$Salario
+y = dados$Experiencia
+
+library(car)
+library(MASS)
+library(lmtest)
+library(lawstat)
+library(nortest)
+
+
+```
+
+Gráfico de dispersão :
+```{r}
+plot(x,y,xlab='Anos de experi�ncia',ylab='Sal�rio',cex.lab=1.5,lwd=2,cex.axis=1.5,ylim=c(1.5,5),pch=16)
+
+# plot(x,y, xlab='Anos de experiencia', ylab='Salario')
+
+plot(x[1:12],y[1:12],xlab='Anos de experi�ncia',ylab='Sal�rio',cex.lab=1.5,lwd=2,cex.axis=1.5,ylim=c(1.5,5),pch=16,xlim=c(0,30),col=2)
+points(x[13:27],y[13:27],pch=16,col=4)
+legend(0,4.7,legend=c("Feminino","Masculino"),col=c(2,4),pch=16,bty="n")
+
+```
+
+# Correlação amostral 
+```{r}
+rho = cor(y,x)
+```
+
+# BoxPlot
+```{r}
+boxplot(y)
+boxplot(x)
+```
+
+# Histogramas
+```{r}
+hist(y)
+hist(x)
+```
+
+# Estimações 
+
+```{r}
+n   = length(y)
+SXX = sum((x-mean(x))^2)
+SYY = sum((y-mean(y))^2)
+SXY = sum(x*y)-n*mean(x)*mean(y) 
+
+```
+
+
+```{r}
+beta1_hat = SXY/SXX
+beta0_hat = mean(y)-beta1_hat*mean(x)
+```
+
+# Valores ajustados
+```{r}
+y_hat = NULL
+y_hat = beta0_hat+beta1_hat*x
+plot(x,y,xlab='Anos de experiencia',ylab='Salario',cex.lab=1.5,lwd=2,cex.axis=1.5,ylim=c(1.5,5),pch=16)
+points(x,y_hat,lwd=2,col=2,cex.lab=1.5,cex.axis=1.5,pch=16)
+```
+
+# Adicionando a reta ajustada no gráfico
+```{r}
+plot(x,y,xlab="Anos de experiencia",ylab="Salario",cex.lab=1.5,ylim=c(1.5,5),pch=16)
+abline(a=beta0_hat,b=beta1_hat,lwd=2,col=2)
+```
+
+#Estimativa pontual de sigma2 e erro padrao da regressao
+```{r}
+SQRes      = sum((y-y_hat)^2)
+sigma2_hat = SQRes/(n-2)
+sqrt(sigma2_hat)
+```
+
+# Intervalo de 95% de confian�a para os coeficientes
+```{r}
+li_beta0 = beta0_hat - qt(0.975,n-2)*sqrt(sigma2_hat*(1/n + (mean(x)^2)/SXX))
+ls_beta0 = beta0_hat + qt(0.975,n-2)*sqrt(sigma2_hat*(1/n + (mean(x)^2)/SXX))
+c(li_beta0,ls_beta0)
+
+li_beta1 = beta1_hat - qt(0.975,n-2)*sqrt(sigma2_hat/SXX)
+ls_beta1 = beta1_hat + qt(0.975,n-2)*sqrt(sigma2_hat/SXX)
+c(li_beta1,ls_beta1)
+```
+
+
+# Estima��o da resposta m�edia
+```{r}
+x0     = 10
+y0_hat = beta0_hat + beta1_hat*x0
+li_y0  = y0_hat - qt(0.975,n-2)*sqrt(sigma2_hat*(1/n + ((x0-mean(x))^2)/SXX))
+ls_y0  = y0_hat + qt(0.975,n-2)*sqrt(sigma2_hat*(1/n + ((x0-mean(x))^2)/SXX))
+c(li_y0,ls_y0)
+```
+
+
+# Predi��o de uma nova observa�ção
+```{r}
+xh     = 3
+yh_hat = beta0_hat + beta1_hat*xh
+li_yh  = yh_hat - qt(0.975,n-2)*sqrt(sigma2_hat*(1+(1/n) + ((xh-mean(x))^2)/SXX))
+ls_yh  = yh_hat + qt(0.975,n-2)*sqrt(sigma2_hat*(1+(1/n) + ((xh-mean(x))^2)/SXX))
+c(li_yh,ls_yh)
+```
+
+# Intervalo de 95% de confian�a para sigma2
+```{r}
+li_sigma2 = SQRes/qchisq(0.975,n-2)
+ls_sigma2 = SQRes/qchisq(0.025,n-2)
+c(li_sigma2,ls_sigma2)
+```
+
+# Analise de vari�ncia (ANOVA)
+```{r}
+SQTot = sum((y-mean(y))^2)
+SQReg = sum((y_hat-mean(y))^2)
+SQRes = sum((y-y_hat)^2)
+
+
+MQReg = SQReg/1
+MQRes = SQRes/(n-2)
+
+estatistica_F = MQReg/MQRes
+qf(0.95,1,n-2)
+```
+
+# Coeficiente de determinação
+```{r}
+R2 = SQReg/SQTot
+```
+
+
+# ************************************************************************* #
+# Exemplo Regress�o linear simples: Exemplo Sal�rio, experi�ncia e sexo     #
+#                         Comandos no R                                     #
+# ************************************************************************* #
+
+
+# Ajuste por m�nimos quadrados
+```{r}
+MRLS = lm(y~x)
+MRLS$coefficients   # ou coefficients(MRLS) # estimativas pontuais dos coeficientes  
+names(MRLS)          # todas as sa�das da fun��o
+```
+
+
+# Valores ajustados 
+```{r}
+valores_ajustados = MRLS$fitted.values   # ou fitted(MRLS)
+```
+
+# Plot dos valores ajustados x valores reais
+```{r}
+plot(y,MRLS$fitted.values,ylab="Valores ajustados",xlab="Valores reais",cex.lab=1.5,lwd=2,cex.axis=1.5)
+abline(0,1,lwd=2)                                               
+```
+
+# Adicionando a reta ajustada no gr�fico
+```{r}
+plot(x,y,xlab="Anos de experi�ncia",ylab="Sal�rio",cex.lab=1.5,cex.axis=1.5,ylim=c(1.5,5),pch=16)
+abline(a=MRLS$coefficients[1],b=MRLS$coefficients[2],lwd=2,col=2)
+```
+
+
+# Resumo da an�lise: Estimativas pontuais e estat�ticas de teste 
+```{r}
+summary(MRLS)
+```
+
+# An�lise de vari�ncia 
+```{r}
+anova(MRLS)
+```
+
+# Intervalos de confian�a para os par�metros do modelo
+```{r}
+confint(MRLS,level=0.95)
+```
+
+# Estima��o do valor m�dio
+
+```{r}
+x_prev = data.frame(x=c(3,14,21))
+predict(MRLS,x_prev,se.fit=F,interval='confidence',level = 0.95)
+```
+
+# Predi��o de uma nova observa��o
+```{r}
+x_prev = data.frame(x=c(3,14,21))
+predict(MRLS,x_prev,se.fit=F,interval='prediction',level = 0.95)
+```
+
+
+# Fazendo a banda de confian�a e de previs�
+```{r}
+new    = data.frame(x=seq(0,29,0.5))
+pred_y = predict(MRLS,new,interval="prediction")
+conf_y = predict(MRLS,new,interval="confidence")
+
+matplot(new$x, cbind(pred_y,conf_y[,-1]),lty=c(1,2,2,3,3),type="l",col=c(1,2,2,3,3),ylab="Sal�rios",xlab="Experi�ncia",cex.lab=1.5,cex.axis=1.5)
+legend(0,5,legend=c("Previs�o","IC"),col=c(2,3),pch=NA,lty=c(2,3),bty="n")
+```
+
+
+#### An�lise dos res�duos ####
+
+# Ajuste do modelo com todas as observa��es
+````{r}
+reg = lm(y~x)
+summary(reg)
+anova(reg)
+```
+
+# Res�duos
+```{r}
+reg$residuals
+residuals(reg)
+```
+
+
+# Res�duos padronizados
+```{r}
+res_padron = rstandard(reg)
+
+```
+
+
+# Res�duos estudentizados
+```{r}
+res_t = rstudent(reg)
+```
+
+# Histograma
+```{r}
+hist(res_t)
+```
+
+# qq plot
+```{r}
+qqnorm(res_t)
+qqline(res_t)
+
+```
+
+
+# Gr�fico dos valores ajustados versus os res�duos
+```{r}
+plot(reg$fitted.values,res_t)
+abline(h=0)
+```
+
+
+#### Testes de hip�teses para res�duos ####
+```{r}
+
+# Carregando pacotes
+library(car)
+library(MASS)
+library(lmtest)
+library(lawstat)
+library(nortest)
+
+```
+
+# Ajuste do modelo com todas as observa��es
+
+```{r}
+reg = lm(y~x)
+```
+
+# Res�duos padronizados
+
+```{r}
+res_padron = rstandard(reg)
+```
+
+
+# Res�duos estudentizados
+```{r}
+res_t = rstudent(reg)
+
+```
+
+### Verificando normalidade
+```{r}
+qqnorm(res_t)
+qqline(res_t)
+
+```
+
+# Teste de correla��o para normalidade
+```{r}
+res_ordem = rank(residuals(reg),ties.method="average")
+z_res     = sqrt(anova(reg)$Mean[2])*qnorm((res_ordem-0.375)/(length(y)+0.25))
+cor(residuals(reg),z_res)
+```
+
+
+# Teste de Kolmogorov-Smirnov  
+```{r}
+ks.test(res_t,pnorm) 
+```
+
+
+# Teste de Kolmogorov-Smirnov  
+```{r}
+ks.test(res_t,pnorm) 
+```
+# Teste de Liliefors
+```{r}
+lillie.test(res_t)
+lillie.test(reg$residuals)
+
+```
+
+
+# Teste de Shapiro-Wilk 
+```{r}
+shapiro.test(res_t)
+shapiro.test(reg$residuals)
+```
+
+# Teste de Brown-Forsythe
+
+```{r}
+grupo = x
+grupo[x<median(x)]  = 1
+grupo[x>=median(x)] = 2
+leveneTest(residuals(reg),grupo,center="median")   # levene.test(residuals(reg),grupo,"median")
+```
+
+# Teste de Breusch-Pagan.
+```{r}
+bptest(formula(reg),studentize=F)
+```
+
+
+# Ajuste do modelo com todas as observa��es
+```{r}
+reg = lm(y~x)
+summary(reg)
+anova(reg)
+shapiro.test(reg$residuals)
+```
+
+# Na AulaPratica2 vimos pelo teste de correla��o para normalidade
+# e pelo teste de Shapiro-Wilk que a hip�tese de normalidade � rejeitada
+#  teste de Shapiro-Wilk testa a hipótese nula que uma amostra y1,y2,⋯,yn, retirada de uma população, tem distribuição normal.
+
+
+# Transforma��es de Box Cox
+
+```{r}
+boxcox(reg)
+bcx = boxcox(reg,lambda=seq(-0.5,1,by=0.001))
+transf.bcx = bcx$x[which.max(bcx$y)]              #bcx$x[bcx$y==max(bcx$y)]
+
+
+y_t = (y^0.5)
+reg1 = lm(y_t~x)
+summary(reg1)
+shapiro.test(reg1$residuals)
+
+y_t2 = log(y)
+reg2 = lm(y_t2~x)
+summary(reg2)
+shapiro.test(reg2$residuals)
+```
+
+
+
+
+#   Um analista de vendas gostaria de encontrar a rela��o entre a renda mensal m�dia de vendas de refei��es
+#   (Y=venda) e o gasto mensal com propaganda (X=gasto). Os dados s�o referentes a 30 restaurantes.
+
+```{r}
+# Carregando os dados
+gasto = c(3,3,3,5,5,5,9,9,9,9,9,12,12,12,12,12,12,15,15,15,15,15,15,17,17,17,19,19,19,19)
+venda = c(81,73,72,91,99,97,127,114,116,123,131,141,151,147,131,145,147,179,166,181,178,185,156,176,189,192,203,193,219,214)
+```
+
+# Gr�fico de dispers�o
+
+```{r}
+plot(gasto,venda)
+```
+
+# Ajuste do modelo linear usando m�nimos quadrados ordin�rios
+
+```{r}
+ajuste<-lm(venda~gasto)
+ajuste
+summary(ajuste)
+```
+
+
+```{r}
+par(mfrow=c(2,2))
+plot(fitted(ajuste),residuals(ajuste),xlab="Valores Ajustados",ylab="Res�duos")
+abline(h=0)
+plot(gasto,residuals(ajuste),xlab="Gasto",ylab="Res�duos")
+abline(h=0)
+hist(residuals(ajuste), xlab="Res�duos",ylab="Freq��ncia",main="")
+qqnorm(residuals(ajuste), ylab="Res�duos",main="")
+qqline(residuals(ajuste))
+```
+
+
+# Verificando a vari�ncia das vendas para cada gasto
+```{r}
+v = tapply(venda,as.factor(gasto),var)
+fator<-c(3,5,9,12,15,17,19)
+as.vector(v)
+plot(as.vector(v),fator)
+```
+
+
+## Ajuste do modelo linear usando m�nimos quadrados ponderados
+```{r}
+ajuste_ponderado<-lm(venda ~ gasto, weights = 1/(gasto^2))
+summary(ajuste_ponderado)
+anova(ajuste_ponderado)
+```
+
+# An�lise dos res�duos
+```{r}
+par(mfrow=c(2,2))
+plot(fitted(ajuste_ponderado),residuals(ajuste_ponderado),xlab="Valores Ajustados",ylab="Res�duos")
+abline(h=0)
+plot(gasto,residuals(ajuste_ponderado),xlab="Gasto",ylab="Res�duos")
+abline(h=0)
+hist(residuals(ajuste_ponderado), xlab="Res�duos",ylab="Freq��ncia",main="")
+qqnorm(residuals(ajuste_ponderado), ylab="Res�duos",main="")
+qqline(residuals(ajuste_ponderado))
+
+
+shapiro.test(ajuste$residuals)
+
+```
+
+
+
+# Exemplo Regress�o linear simples: Exemplo Sal�rio, experi�ncia e sexo     #
+#             Ajustando dois modelo, um para cada grupo 
+################################################################################################
+
+## Sexo feminino
+
+```{r}
+y_f    = y[1:12]
+x_f    = x[1:12]
+MRLS_f = lm(y_f~x_f)
+MRLS_f$coefficients 
+```
+# Resumo da an�lise: Estimativas pontuais e estat�ticas de teste 
+
+```{r}
+summary(MRLS_f)
+
+```
+
+# An�lise de vari�ncia 
+
+```{r}
+anova(MRLS_f)
+
+```
+
+# Adicionando a reta ajustada no gr�fico
+
+```{r}
+plot(x_f,y_f,xlab="Anos de experi�ncia",ylab="Sal�rio",cex.lab=1.5,cex.axis=1.5,ylim=c(1.5,3.5),pch=16)
+abline(a=MRLS_f$coefficients[1],b=MRLS_f$coefficients[2],lwd=2,col=2)
+```
+# Intervalos de confian�a para os par�metros do modelo
+
+```{r}
+confint(MRLS_f)
+
+```
+# Plot dos valores ajustados x valores reais
+
+```{r}
+plot(y_f,MRLS_f$fitted.values,ylab="Valores ajustados",xlab="Valores reais",cex.lab=1.5,lwd=2,cex.axis=1.5)
+abline(0,1,lwd=2)
+```
+## Sexo masculino
+
+```{r}
+y_m    = y[13:27]
+x_m    = x[13:27]
+MRLS_m = lm(y_m~x_m)
+MRLS_m$coefficients 
+```
+
+# Resumo da an�lise: Estimativas pontuais e estat�ticas de teste 
+
+```{r}
+summary(MRLS_m)
+
+```
+
+# An�lise de vari�ncia 
+```{r}
+anova(MRLS_m)
+
+```
+
+# Adicionando a reta ajustada no gr�fico
+
+```{r}
+plot(x_m,y_m,xlab="Anos de experi�ncia",ylab="Sal�rio",cex.lab=1.5,cex.axis=1.5,ylim=c(1.5,5),pch=16)
+abline(a=MRLS_m$coefficients[1],b=MRLS_m$coefficients[2],lwd=2,col=2)
+```
+
+# Intervalos de confian�a para os par�metros do modelo
+
+```{r}
+confint(MRLS_m)
+
+```
+
+# Plot dos valores ajustados x valores reais
+
+```{r}
+plot(y_m,MRLS_m$fitted.values,ylab="Valores ajustados",xlab="Valores reais",cex.lab=1.5,lwd=2,cex.axis=1.5)
+abline(0,1,lwd=2)    
+
+```
+
+##### Res�duos: Separando os grupos
+
+## Sexo feminino
+```{r}
+y_f = y[1:12]
+x_f = x[1:12]
+reg_f = lm(y_f~x_f)
+summary(reg_f)
+anova(reg_f)
+```
+
+# An�lise dos res�duos
+```{r}
+res_f_t = rstudent(reg_f)
+qqnorm(res_f_t)
+qqline(res_f_t)
+plot(reg_f$fitted.values,res_f_t)
+abline(h=0)
+```
+
+
+## Sexo masculino
+```{r}
+y_m = y[13:27]
+x_m = x[13:27]
+reg_m = lm(y_m~x_m)
+summary(reg_m)
+anova(reg_m)
+```
+
+# An�lise dos res�duos
+```{r}
+res_m_t<-rstudent(reg_m)
+qqnorm(res_m_t)
+qqline(res_m_t)
+plot(reg_m$fitted.values,res_m_t)
+abline
+```

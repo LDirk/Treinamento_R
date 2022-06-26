@@ -1,0 +1,175 @@
+---
+title: "Trabalho de Modelos Lineares, Lucas Dirk Gomes Ferreira"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+# Informações: 
+#   n = 25 
+#   X = o número de trabalhadores supervisionados, variável explicativa. 
+#   y = número de supervisores, variável respostas.
+
+#  Carregando os dados e criando variáveis importantes.
+```{r}
+x=c(294,247,267,358,423,311,450,534,438,697,688,630,709,627,615,999,1022,1015,700,
+    850,980,1025,1021,1200,1500) 
+
+y=c(30,32,37,44,47,49,56,62,68,78,80,84,88,97,100,109,114,117,106,128,130,160,97,
+    180,210) 
+
+n <- length(y)
+x_barra <- mean(x)
+y_barra <- mean(y)
+
+s_yy <- sum(y^2) - n*(y_barra)^2
+s_xx <- sum(x^2) - n*(x_barra)^2
+s_xy <- sum(x*y) - n*x_barra*y_barra
+
+```
+
+# Verificando o gráfico de dispersão e o coeficiente de correlação linear.
+```{r}
+plot(x,y,
+xlab = "Número de trabalhadores",
+ylab = "Número de supervisores",
+main = "Número de trabalhadores x número de supervisores",
+type = "p",
+pch = 16,
+col = "red")
+grid()
+
+rho_xy = s_xy/sqrt(s_xx*s_yy)
+paste("O coeficiente de correlaçao entre as variaveis é: ", rho_xy)
+
+# Logo, conseguimos ver através do gráfico de dispersão que os dados possuem uma forte correlação linear e isso
+# também é indicado pelo coeficiente de correlação, porém, outras análises devem ser feitas.
+
+```
+ 
+ 
+ 
+# Verificando a reta ajustada 
+```{r}
+modelo_1=lm(y~x)
+summary(modelo_1)
+
+plot(x,y,
+xlab = "Número de trabalhadores",
+ylab = "Número de supervisores",
+main = "Número de trabalhadores x número de supervisores",
+type = "p",
+pch = 10,
+col = "red")
+grid()
+abline(-0.969214, 0.13222)
+
+# A reta ajustada pelo modelo eh: Y_hat = -0.969214 + 0.132229X
+# Ou seja, 
+
+# beta 0 = -0.96
+  # A media comum de supervisores quando o número de trabalhadores é zero é de -0.969214, o que é estranho, porém
+# para resolvermos isso basta por um piso na variavel explicativa x. 
+
+# Beta 1 = 0.132229
+  # Para cada aumento de uma unidade no número de funcionários, ocorre em média, um aumento de 0.13 supervisores. 
+```
+
+# Verificando os resíduos
+```{r}
+# Para a analise grafica, escolhi usar os residuos estudentizados.
+res_t1=rstudent(modelo_1) 
+
+# Primeiramente, farei o grafico dos residuos versus valores ajustados:
+plot(modelo_1$fitted.values,res_t1)
+abline(h=0)
+
+# Aparentemente a variável não está estavel
+```
+
+# Utilizando transformações para estabilizar a variância
+```{r}
+# Para saber qual a melhor transformação, usei a transformação de box cox e escolhi o valor 1/2
+boxCox(modelo_1)
+
+x_2 = x
+y_2 = sqrt(y)
+
+
+modelo_2=lm(y_2~x_2)
+modelo_2 
+
+res_t2=rstudent(modelo_2) # estudentizados
+
+# Primeiramente, farei o grafico dos residuos versus valores ajustados :
+plot(modelo_2$fitted.values,res_t2)
+abline(h=0)
+# os residuos parecem se distribuir aleatoriamente em torno do zero.
+# Ou seja, nao parece existir violacao da suposicao de variancia constante dos erros. 
+
+```
+
+# Testando a variância dos erros pelo teste de Brown-Forsythe.
+```{r}
+# Usarei o teste de Brown-Forsythe, pois nao precisa da suposicao de normalidade.
+# H0: a variancia dos residuos eh constante
+# H1: a variancia dos residuos nao eh constante
+
+grupo = x_2 # var explicativa
+grupo[x_2<median(x_2)]  = 1
+grupo[x_2>=median(x_2)] = 2
+
+library(car)
+leveneTest(residuals(modelo_2),grupo,center="median")
+
+# Com p-valor=0.56, nao rejeito H0 ao nivel de 5% de significancia.
+# Confirmando, nao ha evidencias da violacao da suposicao de variancia constante dos erros.
+``` 
+
+# Verificando a normalidade dos resíduos.
+```{r}
+# Primeiramente veremos um histograma dos resíduos para procurarmos simetria
+hist(res_t2)
+# Aparentemente o resíduo possui uma certa simetria. 
+
+# Verificaremos  através do shapiro wilk
+# H0: os residuos tem distribuicao normal
+# H1: os residuos nao tem distribuicao normal
+shapiro.test(res_t2)
+
+# Com p-valor=0.5043, não rejeito H0 ao nivel de 5% de significancia.
+# Não há evidencias que o resíduo não tem distribuição normal
+
+qqnorm(res_t2)
+qqline(res_t2)
+# Porém, através do qqnorm, vemos que os pontos se distanciam um pouco da normal na calda superior, o que pode ser
+# um sinal de alerta. 
+
+```
+
+# Com isso vemos que o modelo passou nas suposições de normalidade, estabilidade da variacia e serem aleatoriamente 
+# distribuidos em torno do zero. 
+
+# Portando o modelo proposto é SQRT(y_chap) = 4.495638 + 0.006843x.
+# Vemos também através do summary que os modelos possuem p-valor significativo bem abaixo de 1% , possui um bom 
+# rsquad e passa no teste F com um excelente p-valor.
+# Então, através de todas analises, concluimos que possuimos um bom modelo. 
+ 
+
+```{r}
+modelo_2=lm(y_2~x_2)
+summary(modelo_2)
+
+
+plot(x_2,y_2,
+xlab = "Número de trabalhadores",
+ylab = "Número de supervisores",
+main = "Número de trabalhadores x número de supervisores",
+type = "p",
+pch = 16,
+col = "red")
+grid()
+abline(4.495638, 0.006843)
+
+```
